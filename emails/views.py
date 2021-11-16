@@ -36,32 +36,7 @@ class Sequence_API(APIView):
     * subjectEmail : models.CharField("Subject of emails", max_length=150)
     * replyEmail : models.EmailField("Email for reply-to")
     ####<b>Please pass your unique token to auth the request</b>
-    """
-    def get(self, request, token=None):
-        if token:
-            try:
-                sequence = Sequence.objects.get(id=token)
-                serializer = SequenceSerializer(sequence)
-                print(request.user)
-                return Response({"status": "success", "data": "tres"}, status=status.HTTP_200_OK)
-            except:
-                return Response({"status": "error"}, status=status.HTTP_400_BAD_REQUEST)
-        return Response({"status": "error"}, status=status.HTTP_400_BAD_REQUEST)
 
-    def put(self, request, token=None):
-        if token:
-            try:
-                sequence = Sequence.objects.get(id=token)
-                serializer = SequenceSerializer(sequence, data=request.data["data"])
-                if serializer.is_valid():
-                    serializer.save()
-                return Response({"status": "success", "data": serializer.data}, status=status.HTTP_200_OK)
-            except:
-                return Response({"status": "error", "data":request.data}, status=status.HTTP_400_BAD_REQUEST)
-        return Response({"status": "error"}, status=status.HTTP_400_BAD_REQUEST)
-
-class CreateSequence_API(APIView):
-    """
     post:
     ##<p>Link : /sequence/</p>
     Create new sequence.<br/>
@@ -78,15 +53,39 @@ class CreateSequence_API(APIView):
     * replyEmail : models.EmailField("Email for reply-to")
     ####<b>Please pass your unique token to auth the request</b>
     """
+    def get(self, request):
+        if request.user.is_authenticated:
+            try:
+                sequence = Sequence.objects.get(user=request.user)
+                serializer = SequenceSerializer(sequence)
+                return Response({"status": "success", "data": serializer.data}, status=status.HTTP_200_OK)
+            except:
+                return Response({"status": "error"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"status": "error", "data":"not auth"}, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request):
+        if request.user.is_authenticated:
+            try:
+                sequence = Sequence.objects.get(user=request.user)
+                serializer = SequenceSerializer(sequence, data=request.data["data"])
+                if serializer.is_valid():
+                    serializer.save()
+                return Response({"status": "success", "data": serializer.data}, status=status.HTTP_200_OK)
+            except:
+                return Response({"status": "error", "data":request.data}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"status": "error", "data":"not auth"}, status=status.HTTP_400_BAD_REQUEST)
+        
     def post(self, request):
-        try:
-            serializer = SequenceSerializer(data=request.data["data"])
-            if serializer.is_valid():
-                serializer.save()
-                return Response({"status": "success", "data": serializer.data}, status=status.HTTP_201_CREATED)
-            return Response({"status": "error", "data":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-        except:
-            return Response({"status": "error", "data":request.data}, status=status.HTTP_400_BAD_REQUEST)
+        if request.user.is_authenticated:
+            try:
+                serializer = SequenceSerializer(data=request.data["data"])
+                if serializer.is_valid():
+                    serializer.save()
+                    return Response({"status": "success", "data": serializer.data}, status=status.HTTP_201_CREATED)
+                return Response({"status": "error", "data":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            except:
+                return Response({"status": "error", "data":request.data}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"status": "error", "data":"not auth"}, status=status.HTTP_400_BAD_REQUEST)
 
 class Person_API(APIView):
     """
@@ -117,21 +116,20 @@ class Person_API(APIView):
     * email = models.EmailField() ==> email is unique for a campaign
     ####<b>Please pass your unique token to auth the request</b>
     """
-    permission_classes = (IsAuthenticated,)
-    def get(self, request, token=None):
-        if token:
+    def get(self, request):
+        if request.user.is_authenticated:
             try:
-                sequence = Sequence.objects.get(id=token)
+                sequence = Sequence.objects.get(user=request.user)
             except:
                 return Response({"status": "error"}, status=status.HTTP_400_BAD_REQUEST)
             serializer = PersonSerializer(Person.objects.filter(sequence=sequence), many=True)
             return Response({"status": "success", "data": serializer.data}, status=status.HTTP_200_OK)
-        return Response({"status": "error"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"status": "error", "data":"not auth"}, status=status.HTTP_400_BAD_REQUEST)
 
-    def post(self, request, token=None):
-        if token:
+    def post(self, request):
+        if request.user.is_authenticated:
             try:
-                sequence = Sequence.objects.get(id=token).id
+                sequence = Sequence.objects.get(user=request.user).id
                 step = EmailModel.objects.filter(sequence=sequence).order_by("order").first()
                 nextStepDate = now().date() + datetime.timedelta(days=step.days)
                 step_id = step.id
@@ -149,7 +147,7 @@ class Person_API(APIView):
             except:
                 return Response({"status": "error"}, status=status.HTTP_400_BAD_REQUEST)
             return Response({"status": "success", "data": "Persons added"}, status=status.HTTP_200_OK)
-        return Response({"status": "error"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"status": "error", "data":"not auth"}, status=status.HTTP_400_BAD_REQUEST)
 
 class DeletePerson_API(APIView):
     """
@@ -158,11 +156,10 @@ class DeletePerson_API(APIView):
     Delete a lead.
     ####<b>Please pass your unique token to auth the request</b>
     """
-    permission_classes = (IsAuthenticated,)
     def delete(self, request, token=None, id=None):
-        if token and id:
+        if request.user.is_authenticated and id:
             try:
-                sequence = Sequence.objects.get(id=token)
+                sequence = Sequence.objects.get(user=request.user)
                 person = Person.objects.get(sequence=sequence.id, id=id)
                 person.delete()
             except:
@@ -201,19 +198,18 @@ class Emails_API(APIView):
     * model = models.TextField("Model") => the model of email  
     ####<b>Please pass your unique token to auth the request</b>
     """
-    permission_classes = (IsAuthenticated,)
     def get(self, request, token=None):
-        if token:
+        if request.user.is_authenticated:
             try:
-                sequence = Sequence.objects.get(id=token)
+                sequence = Sequence.objects.get(user=request.user)
             except:
                 return Response({"status": "error"}, status=status.HTTP_400_BAD_REQUEST)
             serializer = EmailModelSerializer(EmailModel.objects.filter(sequence=sequence), many=True)
             return Response({"status": "success", "data": serializer.data}, status=status.HTTP_200_OK)
-        return Response({"status": "error"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"status": "error", "data":"not auth"}, status=status.HTTP_400_BAD_REQUEST)
 
     def post(self, request, token=None):
-        if token:
+        if request.user.is_authenticated:
             try:
                 serializer_list = []
                 id_list = []
@@ -248,7 +244,7 @@ class Emails_API(APIView):
                     "data" : request.data
                 }
                 return Response({"status": "error", "data": data}, status=status.HTTP_400_BAD_REQUEST)
-        return Response({"status": "error"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"status": "error", "data":"not auth"}, status=status.HTTP_400_BAD_REQUEST)
 
 class SendEmail_API(APIView):
     schema = None

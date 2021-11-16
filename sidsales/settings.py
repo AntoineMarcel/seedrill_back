@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'emails.apps.EmailsConfig',
     'authentification.apps.AuthentificationConfig',
+    'integration.apps.IntegrationConfig',
     'rest_framework',
     'rest_framework.authtoken',  # <-- Here
     'corsheaders',
@@ -139,6 +140,7 @@ REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
