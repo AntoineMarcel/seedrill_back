@@ -1,0 +1,13 @@
+{
+    "data": [
+        {
+            "id": "a7e24afe-ddde-4f32-bc60-dc29796dddfc",
+            "days": 1,
+            "model": "Hello {{firstName}}, how are you today ??\r\nI wanted to reach you about\r\nthat thing :\r\n\r\n\r\ntest"
+        },
+        {
+            "days": 1,
+            "model": "Hello {{firstName}}, yoyoyoy\r\n\r\ntest"
+        }
+    ]
+}
