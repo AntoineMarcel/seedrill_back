@@ -7,7 +7,7 @@ from rest_framework.views import APIView
 
 from .models import EmailModel, Person, Sequence
 from .serializers import EmailModelSerializer, PersonSerializer, SequenceSerializer
-from .utils import send_mailModel
+from .utils import create_lead, send_mailModel
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from django.core.mail import EmailMultiAlternatives
 
@@ -130,20 +130,7 @@ class Person_API(APIView):
         if request.user.is_authenticated:
             try:
                 sequence = Sequence.objects.get(user=request.user).id
-                step = EmailModel.objects.filter(sequence=sequence).order_by("order").first()
-                nextStepDate = now().date() + datetime.timedelta(days=step.days)
-                step_id = step.id
-                serializer_list = []
-                for newPerson in request.data["data"]:
-                    newPerson["sequence"] = sequence
-                    newPerson["nextStep"] = step_id
-                    newPerson["nextStepDate"] = nextStepDate
-                    serializer = PersonSerializer(data=newPerson)
-                    if not serializer.is_valid():
-                        return Response({"status": "error", "data": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-                    serializer_list.append(serializer)
-                for serializer in serializer_list:
-                    serializer.save()
+                create_lead(request,sequence)
             except:
                 return Response({"status": "error"}, status=status.HTTP_400_BAD_REQUEST)
             return Response({"status": "success", "data": "Persons added"}, status=status.HTTP_200_OK)

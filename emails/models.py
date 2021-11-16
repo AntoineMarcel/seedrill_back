@@ -8,6 +8,10 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 
 from django.contrib.auth.models import User
 
+def RandomID():
+    id = uuid.uuid4().hex[:6].upper()
+    return id
+
 class Sequence(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -31,11 +35,6 @@ class EmailModel(OrderedModel):
     class Meta:
         ordering = ('order',)
 
-    def modelise_email(self, person):
-        email = self.model
-        email = email.replace("{{firstName}}", person.firstName)
-        email = email.replace("{{lastName}}", person.lastName)
-        return email
 # class Variable(models.Model):
 #     sequence = models.ForeignKey(Sequence, on_delete=models.CASCADE)
 #     name = models.CharField("Nom", max_length=50)
@@ -50,6 +49,7 @@ class Person(models.Model):
     email = models.EmailField()
     visits = models.IntegerField(default=0)
     buy = models.IntegerField(default=0)
+    friendCode = models.CharField(max_length=6, default=RandomID, unique=True, editable=False)
 
     class Meta:
         unique_together = ("email", "sequence")

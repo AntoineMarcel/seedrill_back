@@ -4,9 +4,11 @@ from .models import *
 
 class EmailModelAdmin(OrderedModelAdmin):
     list_display = ('model', 'order', 'move_up_down_links')
+class PersonAdmin(admin.ModelAdmin):
+    readonly_fields=('friendCode',)
 
 admin.site.register(EmailModel, EmailModelAdmin)
 admin.site.register(Sequence)
-admin.site.register(Person)
+admin.site.register(Person, PersonAdmin)
 
 # Register your models here.

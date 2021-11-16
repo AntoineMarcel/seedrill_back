@@ -1,54 +1,37 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers import ParrainSerializer, CreateParrainSerializer
-from .models import Parrain, Campaign, Steps
 
+from emails.utils import create_lead
+from .serializers import BannerSerializer, CreateParrainSerializer
+from emails.models import Sequence, Person
 class Banner_API(APIView):
-    def get(self, request, campaignID=None, friendCode=None):
-        if friendCode and campaignID:
+    def get(self, request, sequenceID=None, friendCode=None):
+        if friendCode and sequenceID:
             try:
-                item = Parrain.objects.get(friendCode=friendCode)
-                if not item.campaign.token == campaignID:
+                person = Person.objects.get(friendCode=friendCode)
+                if not str(person.sequence.id) == str(sequenceID):
                     return Response({"status": "error"}, status=status.HTTP_400_BAD_REQUEST)
             except:
                 return Response({"status": "error"}, status=status.HTTP_400_BAD_REQUEST)
-            serializer = ParrainSerializer(item)
-            item.visits = item.visits + 1
-            item.save()
+            serializer = BannerSerializer(person)
+            person.visits = person.visits + 1
+            person.save()
             return Response({"status": "success", "data": serializer.data}, status=status.HTTP_200_OK)
         return Response({"status": "error"}, status=status.HTTP_400_BAD_REQUEST)
 
 class Payment_API(APIView):
-    def post(self, request):
-        try:
-            campaign = Campaign.objects.get(token=request.data['campaignTk'])
-            if not campaign.web_site in request.headers["Origin"]:
-                return Response({"status": "error", "data": {"origin": request.headers["Origin"], "configured" :campaign.web_site}}, status=status.HTTP_400_BAD_REQUEST)
-            parrain = {
-                'campaign':campaign.id,
-                'firstName': request.data['firstName'],
-                'lastName': request.data['lastName'],
-                'email': request.data['email'],
-                'step': Steps.objects.get(campaign=campaign, order=0).id,
-            }
-            serializer = CreateParrainSerializer(data=parrain)
-            if serializer.is_valid():
-                serializer.save()
-                if request.data['friendCode']:
-                    try:
-                        fromUser = Parrain.objects.get(friendCode=request.data['friendCode'])
-                        if fromUser.campaign.token == request.data['campaignTk']:
-                            fromUser.buy = fromUser.buy + 1
-                            fromUser.save()
-                    except:
-                        pass
-                return Response({"status": "success", "data": serializer.data}, status=status.HTTP_200_OK)
-            else:
-                return Response({"status": "error", "data": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            data = {
-                "except" : str(e),
-                "data" : request.data
-            }
-            return Response({"status": "error", "data": data}, status=status.HTTP_400_BAD_REQUEST)
+    def post(self, request, sequenceID=None):
+        if sequenceID:
+            try:
+                sequence = Sequence.objects.get(id=sequenceID)
+                if not sequence.web_site in request.headers["Origin"]:
+                    return Response({"status": "error", "data": {"origin": request.headers["Origin"], "configured" :sequence.web_site}}, status=status.HTTP_400_BAD_REQUEST)
+                create_lead(request, sequence)
+            except Exception as e:
+                data = {
+                    "except" : str(e),
+                    "data" : request.data
+                }
+                return Response({"status": "error", "data": data}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"status": "error"}, status=status.HTTP_400_BAD_REQUEST)
