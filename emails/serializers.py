@@ -10,7 +10,7 @@ class SequenceSerializer(serializers.ModelSerializer):
 class PersonSerializer(serializers.ModelSerializer):
     class Meta:
         model = Person
-        fields = ('__all__')
+        exclude = ('nextStepDate', 'nextStep' )
 
 class EmailModelSerializer(serializers.ModelSerializer):
     class Meta:

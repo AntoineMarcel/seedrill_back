@@ -57,6 +57,7 @@ class Sequence_API(APIView):
         if request.user.is_authenticated:
             try:
                 sequence = Sequence.objects.get(user=request.user)
+                print(request.user)
                 serializer = SequenceSerializer(sequence)
                 return Response({"status": "success", "data": serializer.data}, status=status.HTTP_200_OK)
             except:
@@ -67,10 +68,13 @@ class Sequence_API(APIView):
         if request.user.is_authenticated:
             try:
                 sequence = Sequence.objects.get(user=request.user)
-                serializer = SequenceSerializer(sequence, data=request.data["data"])
+                request.data["user"]=request.user.id
+                serializer = SequenceSerializer(sequence, data=request.data)
                 if serializer.is_valid():
                     serializer.save()
-                return Response({"status": "success", "data": serializer.data}, status=status.HTTP_200_OK)
+                    return Response({"status": "success", "data": serializer.data}, status=status.HTTP_200_OK)
+                else:
+                    return Response({"status": "error", "data":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
             except:
                 return Response({"status": "error", "data":request.data}, status=status.HTTP_400_BAD_REQUEST)
         return Response({"status": "error", "data":"not auth"}, status=status.HTTP_400_BAD_REQUEST)
@@ -78,7 +82,8 @@ class Sequence_API(APIView):
     def post(self, request):
         if request.user.is_authenticated:
             try:
-                serializer = SequenceSerializer(data=request.data["data"])
+                request.data["user"]=request.user.id
+                serializer = SequenceSerializer(data=request.data)
                 if serializer.is_valid():
                     serializer.save()
                     return Response({"status": "success", "data": serializer.data}, status=status.HTTP_201_CREATED)
@@ -143,7 +148,7 @@ class DeletePerson_API(APIView):
     Delete a lead.
     ####<b>Please pass your unique token to auth the request</b>
     """
-    def delete(self, request, token=None, id=None):
+    def delete(self, request, id=None):
         if request.user.is_authenticated and id:
             try:
                 sequence = Sequence.objects.get(user=request.user)
@@ -185,7 +190,7 @@ class Emails_API(APIView):
     * model = models.TextField("Model") => the model of email  
     ####<b>Please pass your unique token to auth the request</b>
     """
-    def get(self, request, token=None):
+    def get(self, request):
         if request.user.is_authenticated:
             try:
                 sequence = Sequence.objects.get(user=request.user)
@@ -195,27 +200,29 @@ class Emails_API(APIView):
             return Response({"status": "success", "data": serializer.data}, status=status.HTTP_200_OK)
         return Response({"status": "error", "data":"not auth"}, status=status.HTTP_400_BAD_REQUEST)
 
-    def post(self, request, token=None):
+    def post(self, request):
         if request.user.is_authenticated:
+            sequence = Sequence.objects.get(user=request.user).id
             try:
                 serializer_list = []
                 id_list = []
-                for emailModel in request.data["data"]:
-                    emailModel["sequence"] = token
-                    if "id" in emailModel:
+                for emailModel in request.data:
+                    print(emailModel)
+                    emailModel["sequence"]=sequence
+                    if emailModel["id"] != "":
                         id_list.append(emailModel["id"])
                         serializer = EmailModelSerializer(EmailModel.objects.get(id=emailModel["id"]),data=emailModel)
                     else:
                         serializer = EmailModelSerializer(data=emailModel)
                     serializer_list.append(serializer)
                     if not serializer.is_valid():
+                        print(serializer.errors)
                         return Response({"status": "error", "data": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
                 
                 #delete emails that don't appears
-                for savedEmail in EmailModel.objects.filter(sequence=token):
+                for savedEmail in EmailModel.objects.filter(sequence=sequence):
                     if str(savedEmail.id) not in id_list:
                         savedEmail.delete()
-
                 #save all email models
                 for serializer in serializer_list:
                     serializer.save()
@@ -223,7 +230,7 @@ class Emails_API(APIView):
                 #update steps
                 for idx, serializer in enumerate(serializer_list):
                     serializer.instance.to(idx + 1)
-
+                serializer = EmailModelSerializer(EmailModel.objects.filter(sequence=sequence), many=True)
                 return Response({"status": "success", "data": serializer.data}, status=status.HTTP_200_OK)
             except Exception as e:
                 data = {

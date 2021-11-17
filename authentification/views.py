@@ -11,19 +11,11 @@ class UserRecordView(APIView):
     API View to create or get a list of all the registered
     users. POST request allows to create a new user.
     """
+    authentication_classes = []
+    permission_classes = []
     def post(self, request):
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid(raise_exception=ValueError):
             serializer.create(validated_data=request.data)
-            return Response(
-                serializer.data,
-                status=status.HTTP_201_CREATED
-            )
-        return Response(
-            {
-                "error": True,
-                "error_msg": serializer.error_messages,
-            },
-            status=status.HTTP_400_BAD_REQUEST
-        )
-
+            return Response({"status": "success", "data": serializer.data}, status=status.HTTP_201_CREATED)
+        return Response({"status": "error", "data":serializer.error_messages}, status=status.HTTP_400_BAD_REQUEST)
