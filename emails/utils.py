@@ -15,9 +15,13 @@ def create_auth_token(sender, instance=None, created=False, **kwargs):
     if created:
         Token.objects.create(user=instance)
 
-def replace_variable(message, person):
+def replace_variable(message, person:Person):
     message = message.replace("{{firstName}}", person.firstName)
     message = message.replace("{{lastName}}", person.lastName)
+    message = message.replace("{{friendCode}}", person.friendCode)
+    message = message.replace("{{promo_code}}", person.sequence.promo_code)
+    message = message.replace("{{gain}}", person.sequence.gain)
+    message = message.replace("{{friendLink}}", person.sequence.website + "?friendCode=" + person.friendCode)
     return message
 
 def create_lead(data, sequence):

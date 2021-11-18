@@ -41,8 +41,8 @@ class EmailModel(OrderedModel):
 
 class Person(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    sequence = models.ForeignKey(Sequence, on_delete=models.CASCADE)
-    nextStep = models.ForeignKey(EmailModel, on_delete=models.CASCADE,blank=True,null=True)
+    sequence = models.ForeignKey(Sequence, on_delete=models.PROTECT)
+    nextStep = models.ForeignKey(EmailModel, on_delete=models.PROTECT,blank=True,null=True)
     nextStepDate = models.DateField("Next action date", blank=True,null=True)
     firstName = models.CharField("First name", max_length=50)
     lastName = models.CharField("Last name", max_length=50)

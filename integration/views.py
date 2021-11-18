@@ -6,6 +6,8 @@ from emails.utils import create_lead
 from .serializers import BannerSerializer, CreateParrainSerializer
 from emails.models import Sequence, Person
 class Banner_API(APIView):
+    authentication_classes = []
+    permission_classes = []
     def get(self, request, sequenceID=None, friendCode=None):
         if friendCode and sequenceID:
             try:
@@ -21,6 +23,8 @@ class Banner_API(APIView):
         return Response({"status": "error"}, status=status.HTTP_400_BAD_REQUEST)
 
 class Payment_API(APIView):
+    authentication_classes = []
+    permission_classes = []
     def post(self, request, sequenceID=None):
         if sequenceID:
             try:

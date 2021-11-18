@@ -161,6 +161,7 @@ class ImportPerson_API(APIView):
                         })
                 sequence = Sequence.objects.get(user=request.user)
                 data = create_lead(data,sequence)
+                print(data)
                 if (data["status"] == "success"):
                     return Response({"status": "success", "data": data["data"]}, status=status.HTTP_200_OK)
                 else:
