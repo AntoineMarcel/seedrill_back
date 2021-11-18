@@ -1,4 +1,5 @@
 import datetime
+import io
 
 from django.utils.timezone import now
 from rest_framework import status
@@ -10,8 +11,8 @@ from .serializers import EmailModelSerializer, PersonSerializer, SequenceSeriali
 from .utils import create_lead, send_mailModel
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from django.core.mail import EmailMultiAlternatives
-
-
+from io import BytesIO
+import csv
 class Sequence_API(APIView):
     """
     get:
@@ -134,9 +135,30 @@ class Person_API(APIView):
     def post(self, request):
         if request.user.is_authenticated:
             try:
-                sequence = Sequence.objects.get(user=request.user).id
-                create_lead(request,sequence)
+                sequence = Sequence.objects.get(user=request.user)
+                create_lead(request.data,sequence)
             except:
+                return Response({"status": "error"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"status": "success", "data": "Persons added"}, status=status.HTTP_200_OK)
+        return Response({"status": "error", "data":"not auth"}, status=status.HTTP_400_BAD_REQUEST)
+
+class ImportPerson_API(APIView):
+    def post(self, request):
+        if request.user.is_authenticated:
+            try:
+                data = {"data" :  []}
+                csv_file = request.data["file"]
+                decoded_file = csv_file.read().decode('utf-8')
+                io_string = io.StringIO(decoded_file)
+                for line in csv.reader(io_string, delimiter=';', quotechar='|'):
+                    data["data"].append({
+                        "firstName" : line[1],
+                        "lastName" : line[2],
+                        "email" : line[0],
+                        })
+                sequence = Sequence.objects.get(user=request.user)
+                create_lead(data,sequence)
+            except :
                 return Response({"status": "error"}, status=status.HTTP_400_BAD_REQUEST)
             return Response({"status": "success", "data": "Persons added"}, status=status.HTTP_200_OK)
         return Response({"status": "error", "data":"not auth"}, status=status.HTTP_400_BAD_REQUEST)
@@ -206,6 +228,8 @@ class Emails_API(APIView):
             try:
                 serializer_list = []
                 id_list = []
+                if (request.data == []):
+                    return Response({"status": "error", "data": "empty email sequence"}, status=status.HTTP_400_BAD_REQUEST)
                 for emailModel in request.data:
                     print(emailModel)
                     emailModel["sequence"]=sequence
@@ -216,9 +240,7 @@ class Emails_API(APIView):
                         serializer = EmailModelSerializer(data=emailModel)
                     serializer_list.append(serializer)
                     if not serializer.is_valid():
-                        print(serializer.errors)
                         return Response({"status": "error", "data": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-                
                 #delete emails that don't appears
                 for savedEmail in EmailModel.objects.filter(sequence=sequence):
                     if str(savedEmail.id) not in id_list:
@@ -257,3 +279,18 @@ class SendEmail_API(APIView):
                 "data" : request.data
             }
             return Response({"status": "error", "data": data}, status=status.HTTP_400_BAD_REQUEST)
+
+class Valid_API(APIView):
+    def get(self, request):
+        if request.user.is_authenticated:
+            try:
+                sequence = Sequence.objects.get(user=request.user).id
+                emails = EmailModel.objects.filter(sequence=sequence)
+                if (len(emails) > 0):
+                    return Response({"status": "success", "data": ""}, status=status.HTTP_200_OK)
+                else:
+                    return Response({"status": "error", "data":"no email"}, status=status.HTTP_400_BAD_REQUEST)
+            except :
+                return Response({"status": "error"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"status": "error", "data":"not auth"}, status=status.HTTP_400_BAD_REQUEST)
+

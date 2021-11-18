@@ -20,13 +20,18 @@ def replace_variable(message, person):
     message = message.replace("{{lastName}}", person.lastName)
     return message
 
-def create_lead(request, sequence):
+def create_lead(data, sequence):
+    emails = EmailModel.objects.filter(sequence=sequence.id)
+    if (len(emails) > 0):
+        return response({"status": "error", "data": "no email in your sequence"}, status=status.HTTP_400_BAD_REQUEST)
     step = EmailModel.objects.filter(sequence=sequence).order_by("order").first()
     nextStepDate = now().date() + datetime.timedelta(days=step.days)
     step_id = step.id
     serializer_list = []
-    for newPerson in request.data["data"]:
-        newPerson["sequence"] = sequence
+    print("data")
+    print(data)
+    for newPerson in data["data"]:
+        newPerson["sequence"] = sequence.id
         newPerson["nextStep"] = step_id
         newPerson["nextStepDate"] = nextStepDate
         serializer = PersonSerializer(data=newPerson)

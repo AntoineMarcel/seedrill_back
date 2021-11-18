@@ -27,7 +27,7 @@ class Payment_API(APIView):
                 sequence = Sequence.objects.get(id=sequenceID)
                 if not sequence.web_site in request.headers["Origin"]:
                     return Response({"status": "error", "data": {"origin": request.headers["Origin"], "configured" :sequence.web_site}}, status=status.HTTP_400_BAD_REQUEST)
-                create_lead(request, sequence)
+                create_lead(request.data, sequence)
             except Exception as e:
                 data = {
                     "except" : str(e),
