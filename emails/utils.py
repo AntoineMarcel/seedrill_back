@@ -22,24 +22,23 @@ def replace_variable(message, person):
 
 def create_lead(data, sequence):
     emails = EmailModel.objects.filter(sequence=sequence.id)
-    if (len(emails) > 0):
-        return response({"status": "error", "data": "no email in your sequence"}, status=status.HTTP_400_BAD_REQUEST)
+    if (len(emails) <= 0):
+        return {"status": "error", "data": "no email in your sequence"}
     step = EmailModel.objects.filter(sequence=sequence).order_by("order").first()
     nextStepDate = now().date() + datetime.timedelta(days=step.days)
     step_id = step.id
     serializer_list = []
-    print("data")
-    print(data)
     for newPerson in data["data"]:
         newPerson["sequence"] = sequence.id
         newPerson["nextStep"] = step_id
         newPerson["nextStepDate"] = nextStepDate
         serializer = PersonSerializer(data=newPerson)
         if not serializer.is_valid():
-            return response({"status": "error", "data": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return {"status": "error", "data": serializer.errors}
         serializer_list.append(serializer)
     for serializer in serializer_list:
         serializer.save()
+    return {"status": "success", "data": "Persons added"}
 
 def send_mailModel(person:Person):
     content = replace_variable(person.nextStep.model, person)

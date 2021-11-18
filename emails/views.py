@@ -136,17 +136,20 @@ class Person_API(APIView):
         if request.user.is_authenticated:
             try:
                 sequence = Sequence.objects.get(user=request.user)
-                create_lead(request.data,sequence)
+                data = create_lead(request.data,sequence)
+                if (data["status"] == "success"):
+                    return Response({"status": "success", "data": data["data"]}, status=status.HTTP_200_OK)
+                else:
+                    return Response({"status": "success", "data": data["data"]}, status=status.HTTP_400_BAD_REQUEST)
             except:
                 return Response({"status": "error"}, status=status.HTTP_400_BAD_REQUEST)
-            return Response({"status": "success", "data": "Persons added"}, status=status.HTTP_200_OK)
         return Response({"status": "error", "data":"not auth"}, status=status.HTTP_400_BAD_REQUEST)
 
 class ImportPerson_API(APIView):
     def post(self, request):
         if request.user.is_authenticated:
             try:
-                data = {"data" :  []}
+                data ={ "data" :  []}
                 csv_file = request.data["file"]
                 decoded_file = csv_file.read().decode('utf-8')
                 io_string = io.StringIO(decoded_file)
@@ -157,10 +160,13 @@ class ImportPerson_API(APIView):
                         "email" : line[0],
                         })
                 sequence = Sequence.objects.get(user=request.user)
-                create_lead(data,sequence)
+                data = create_lead(data,sequence)
+                if (data["status"] == "success"):
+                    return Response({"status": "success", "data": data["data"]}, status=status.HTTP_200_OK)
+                else:
+                    return Response({"status": "error", "data": data["data"]}, status=status.HTTP_400_BAD_REQUEST)
             except :
                 return Response({"status": "error"}, status=status.HTTP_400_BAD_REQUEST)
-            return Response({"status": "success", "data": "Persons added"}, status=status.HTTP_200_OK)
         return Response({"status": "error", "data":"not auth"}, status=status.HTTP_400_BAD_REQUEST)
 
 class DeletePerson_API(APIView):
