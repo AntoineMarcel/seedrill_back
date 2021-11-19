@@ -46,7 +46,7 @@ def create_lead(data, sequence):
 
 def send_mailModel(person:Person):
     content = replace_variable(person.nextStep.model, person)
-    subjectEmail = person.sequence.subjectEmail
+    subjectEmail = replace_variable(person.sequence.subjectEmail, person)
     senderName = person.sequence.senderName
     replyEmail = person.sequence.replyEmail
     
