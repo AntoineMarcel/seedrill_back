@@ -53,7 +53,7 @@ def send_mailModel(person:Person):
     email = EmailMessage(
         subjectEmail,
         content,
-        senderName + '<saveurdinde@gmail.com>',
+        senderName + '<friend@seedrill.co>',
         [person.email],
         reply_to=[replyEmail],
     )

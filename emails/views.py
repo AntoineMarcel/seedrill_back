@@ -10,7 +10,7 @@ from .models import EmailModel, Person, Sequence
 from .serializers import EmailModelSerializer, PersonSerializer, SequenceSerializer
 from .utils import create_lead, send_mailModel
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
-from django.core.mail import EmailMultiAlternatives
+from django.core.mail import EmailMultiAlternatives, send_mail
 from io import BytesIO
 import csv
 class Sequence_API(APIView):
@@ -58,7 +58,6 @@ class Sequence_API(APIView):
         if request.user.is_authenticated:
             try:
                 sequence = Sequence.objects.get(user=request.user)
-                print(request.user)
                 serializer = SequenceSerializer(sequence)
                 return Response({"status": "success", "data": serializer.data}, status=status.HTTP_200_OK)
             except:
@@ -279,12 +278,14 @@ class SendEmail_API(APIView):
             for person in persons_to_send:
                 send_mailModel(person)
                 person.refresh_step()
+            send_mail("Daily send", str({"status": "success", "mail_sended":sended_count}),from_email=None, recipient_list=["antoine@seedrill.co"])
             return Response({"status": "success", "mail_sended":sended_count}, status=status.HTTP_200_OK)
         except Exception as e:
             data = {
                 "except" : str(e),
                 "data" : request.data
             }
+            # send_mail("Daily send", str({"status": "error", "data": data}),from_email=None, recipient_list=["antoine@seedrill.co"])
             return Response({"status": "error", "data": data}, status=status.HTTP_400_BAD_REQUEST)
 
 class Valid_API(APIView):
