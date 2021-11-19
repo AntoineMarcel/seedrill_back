@@ -49,11 +49,10 @@ def send_mailModel(person:Person):
     subjectEmail = replace_variable(person.sequence.subjectEmail, person)
     senderName = person.sequence.senderName
     replyEmail = person.sequence.replyEmail
-    
     email = EmailMessage(
         subjectEmail,
         content,
-        senderName + '<friend@seedrill.co>',
+        senderName + ' <friend@seedrill.co>',
         [person.email],
         reply_to=[replyEmail],
     )
