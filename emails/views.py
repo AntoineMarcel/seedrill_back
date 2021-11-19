@@ -1,18 +1,22 @@
+import csv
 import datetime
 import io
+from io import BytesIO
+import os
 
+from django.core.mail import EmailMultiAlternatives, send_mail
 from django.utils.timezone import now
 from rest_framework import status
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import EmailModel, Person, Sequence
-from .serializers import EmailModelSerializer, PersonSerializer, SequenceSerializer
+from .serializers import (EmailModelSerializer, PersonSerializer,
+                          SequenceSerializer)
 from .utils import create_lead, send_mailModel
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
-from django.core.mail import EmailMultiAlternatives, send_mail
-from io import BytesIO
-import csv
+
+
 class Sequence_API(APIView):
     """
     get:
@@ -283,7 +287,7 @@ class SendEmail_API(APIView):
         except Exception as e:
             data = {
                 "except" : str(e),
-                "data" : request.data
+                "data" : str(os.getenv("PASSMAIL"))
             }
             # send_mail("Daily send", str({"status": "error", "data": data}),from_email=None, recipient_list=["antoine@seedrill.co"])
             return Response({"status": "error", "data": data}, status=status.HTTP_400_BAD_REQUEST)
