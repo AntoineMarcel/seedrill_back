@@ -18,6 +18,10 @@ class Banner_API(APIView):
                 return Response({"status": "error"}, status=status.HTTP_400_BAD_REQUEST)
             serializer = BannerSerializer(person)
             person.visits = person.visits + 1
+            if (person.nextStep != None):
+                person.nexStep = None
+            if (person.nextStepDate != None):
+                person.nextStepDate = None
             person.save()
             return Response({"status": "success", "data": serializer.data}, status=status.HTTP_200_OK)
         return Response({"status": "error"}, status=status.HTTP_400_BAD_REQUEST)
