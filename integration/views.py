@@ -19,7 +19,7 @@ class Banner_API(APIView):
             serializer = BannerSerializer(person)
             person.visits = person.visits + 1
             if (person.nextStep != None):
-                person.nexStep = None
+                person.nextStep = None
             if (person.nextStepDate != None):
                 person.nextStepDate = None
             person.save()

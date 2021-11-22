@@ -5,6 +5,7 @@ from .models import *
 class EmailModelAdmin(OrderedModelAdmin):
     list_display = ('model', 'order', 'move_up_down_links')
 class PersonAdmin(admin.ModelAdmin):
+    list_display = ('firstName', 'lastName', 'email')
     readonly_fields=('friendCode',)
 
 admin.site.register(EmailModel, EmailModelAdmin)
